@@ -3,11 +3,13 @@ package com.orbit.apigateway.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -31,23 +33,17 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                .requestMatchers("/api/auth/login")
-                .permitAll()
+            	.requestMatchers("/error").permitAll()
+	            .requestMatchers("/api/users/**", "/api/auth/**").permitAll()
 
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/orders/**")
-                .hasAllRoles("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/products/**")
-                .permitAll()
-                .requestMatchers("/api/payments/**")
-                .permitAll()
-                .requestMatchers("/api/notifications/**")
-                .permitAll()
-                .requestMatchers("/api/auth/logout")
-                .permitAll()
+                .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/products/**").permitAll()
+                .requestMatchers("/api/payments/**").permitAll()
+                .requestMatchers("/api/notifications/**").permitAll()
+                .requestMatchers("/api/auth/logout").permitAll()
 
-                .anyRequest()
-                .authenticated()
+                .anyRequest().authenticated()
             )
 
             .addFilterBefore(

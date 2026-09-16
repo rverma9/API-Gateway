@@ -57,29 +57,53 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // Allow all preflight OPTIONS checks
+                
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                 .requestMatchers("/error").permitAll()
-                .requestMatchers("/api/users/**", "/api/auth/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "ADMIN")
-                .requestMatchers("/api/products/**").permitAll()
-                .requestMatchers("/api/payments/**").permitAll()
-                .requestMatchers("/api/notifications/**").permitAll()
-                .requestMatchers("/api/auth/logout").permitAll()
 
+                // --- Auth Module ---
+                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
+
+                // --- Products Module ---
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/products/*/activate", "/api/products/*/deactivate").hasRole("ADMIN")
+
+                // --- Orders Module ---
+                .requestMatchers(HttpMethod.GET, "/api/orders/*").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
+                .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("CUSTOMER")
+                .requestMatchers(HttpMethod.PATCH, "/api/orders/*/cancel").hasRole("CUSTOMER")
+                .requestMatchers("/api/admin/orders/**").hasRole("ADMIN")
+
+                // --- Inventory Module ---
+                .requestMatchers("/api/inventory/**").hasRole("ADMIN")
+
+                // --- Payment Module ---
+                .requestMatchers(HttpMethod.POST, "/api/payments/*/refund").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/payments/*").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/orders/*/payment").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/payments").hasRole("CUSTOMER")
+
+                // --- Notification Module ---
+                .requestMatchers(HttpMethod.POST, "/api/notifications").denyAll() 
+                .requestMatchers(HttpMethod.GET, "/api/notifications/**").authenticated()
+
+                // Catch-all
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
-            	    .accessDeniedHandler((request, response, accessDeniedException) -> {
-            	        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            	        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-            	        response.setHeader("Access-Control-Allow-Credentials", "true");
-            	        response.setContentType("application/json");
-            	        response.getWriter().write("{\"message\": \"You are not authorized\"}");
-            	    })
-            	)
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+                    response.setHeader("Access-Control-Allow-Credentials", "true");
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"message\": \"You are not authorized\"}");
+                })
+            )
 
             .addFilterBefore(
                 jwtFilter,

@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
 
                 // --- Auth Module ---
-                .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/auth/login", "/api/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
 
                 // --- Products Module ---
